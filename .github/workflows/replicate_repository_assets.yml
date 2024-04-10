@@ -1,0 +1,112 @@
+name: Automate Assets Creation
+
+on:
+  repository_dispatch:
+    types: [created]
+
+jobs:
+  automate-issue-and-milestone-creation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch Draft Issues from Template
+        id: fetch-draft-issues
+        uses: actions/github-script@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { data: draftIssues } = await github.issues.listForRepo({
+              owner: 'humanbit-dev-org',
+              repo: 'humanbit-templates',
+              state: 'open',
+              filter: 'draft'
+            });
+            return draftIssues;
+
+      - name: Fetch Milestones from Template
+        id: fetch-milestones
+        uses: actions/github-script@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { data: milestones } = await github.issues.listMilestones({
+              owner: 'humanbit-dev-org',
+              repo: 'humanbit-templates'
+            });
+            return milestones;
+
+      - name: Fetch Labels from Template
+        id: fetch-labels
+        uses: actions/github-script@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { data: labels } = await github.issues.listLabelsForRepo({
+              owner: 'humanbit-dev-org',
+              repo: 'humanbit-templates'
+            });
+            return labels;
+
+      - name: Create Issues in New Repository
+        id: create-issues
+        uses: actions/github-script@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const draftIssues = context.outputs['fetch-draft-issues'];
+            for (const issue of draftIssues) {
+              await github.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: issue.title,
+                body: issue.body,
+                assignees: issue.assignees.map(assignee => assignee.login),
+                labels: issue.labels.map(label => label.name),
+              });
+            }
+
+      - name: Create Milestones in New Repository
+        id: create-milestones
+        uses: actions/github-script@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const milestones = context.outputs['fetch-milestones'];
+            for (const milestone of milestones) {
+              await github.issues.createMilestone({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: milestone.title,
+                description: milestone.description,
+                due_on: milestone.due_on
+              });
+            }
+
+      - name: Create Labels in New Repository
+        id: create-labels
+        uses: actions/github-script@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const labels = context.outputs['fetch-labels'];
+            for (const label of labels) {
+              await github.issues.createLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                name: label.name,
+                color: label.color
+              });
+            }
+
+      - name: Connect Issues to Project
+        uses: actions/github-script@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const issues = context.outputs['create-issues'];
+            for (const issue of issues) {
+              await github.projects.addCard({
+                project_id: '2',
+                content_id: issue.id,
+                content_type: 'Issue'
+              });
+            }
