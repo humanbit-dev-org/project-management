@@ -12,7 +12,7 @@ jobs:
         id: fetch-draft-issues
         uses: actions/github-script@v4
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GH_ASSETS_TOKEN }}
           script: |
             const { data: draftIssues } = await github.issues.listForRepo({
               owner: 'humanbit-dev-org',
@@ -26,7 +26,7 @@ jobs:
         id: fetch-milestones
         uses: actions/github-script@v4
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GH_ASSETS_TOKEN }}
           script: |
             const { data: milestones } = await github.issues.listMilestones({
               owner: 'humanbit-dev-org',
@@ -38,7 +38,7 @@ jobs:
         id: fetch-labels
         uses: actions/github-script@v4
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GH_ASSETS_TOKEN }}
           script: |
             const { data: labels } = await github.issues.listLabelsForRepo({
               owner: 'humanbit-dev-org',
@@ -50,7 +50,7 @@ jobs:
         id: create-issues
         uses: actions/github-script@v4
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GH_ASSETS_TOKEN }}
           script: |
             const draftIssues = context.outputs['fetch-draft-issues'];
             for (const issue of draftIssues) {
@@ -68,7 +68,7 @@ jobs:
         id: create-milestones
         uses: actions/github-script@v4
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GH_ASSETS_TOKEN }}
           script: |
             const milestones = context.outputs['fetch-milestones'];
             for (const milestone of milestones) {
@@ -85,7 +85,7 @@ jobs:
         id: create-labels
         uses: actions/github-script@v4
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GH_ASSETS_TOKEN }}
           script: |
             const labels = context.outputs['fetch-labels'];
             for (const label of labels) {
@@ -100,7 +100,7 @@ jobs:
       - name: Connect Issues to Project
         uses: actions/github-script@v4
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GH_ASSETS_TOKEN }}
           script: |
             const issues = context.outputs['create-issues'];
             for (const issue of issues) {
