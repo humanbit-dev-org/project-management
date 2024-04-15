@@ -8,11 +8,17 @@ jobs:
   automate-issue-and-milestone-creation:
     runs-on: ubuntu-latest
     steps:
+      - name: Generate Installation Token
+        id: generate-token
+        uses: tibdex/github-app-token@v1
+        with:
+          app_id: ${{ secrets.GH_APPLICATION_ID }}
+          private_key: ${{ secrets.GH_APPLICATION_KEY }}
+
       - name: Fetch Draft Issues from Template
-        id: fetch-draft-issues
         uses: actions/github-script@v4
         with:
-          github-token: ${{ secrets.GH_ASSETS_TOKEN }}
+          github-token: ${{ steps.generate-token.outputs.token }}
           script: |
             const { data: draftIssues } = await github.issues.listForRepo({
               owner: 'humanbit-dev-org',
@@ -23,10 +29,9 @@ jobs:
             return draftIssues;
 
       - name: Fetch Milestones from Template
-        id: fetch-milestones
         uses: actions/github-script@v4
         with:
-          github-token: ${{ secrets.GH_ASSETS_TOKEN }}
+          github-token: ${{ steps.generate-token.outputs.token }}
           script: |
             const { data: milestones } = await github.issues.listMilestones({
               owner: 'humanbit-dev-org',
@@ -35,10 +40,9 @@ jobs:
             return milestones;
 
       - name: Fetch Labels from Template
-        id: fetch-labels
         uses: actions/github-script@v4
         with:
-          github-token: ${{ secrets.GH_ASSETS_TOKEN }}
+          github-token: ${{ steps.generate-token.outputs.token }}
           script: |
             const { data: labels } = await github.issues.listLabelsForRepo({
               owner: 'humanbit-dev-org',
@@ -47,12 +51,11 @@ jobs:
             return labels;
 
       - name: Create Issues in New Repository
-        id: create-issues
         uses: actions/github-script@v4
         with:
-          github-token: ${{ secrets.GH_ASSETS_TOKEN }}
+          github-token: ${{ steps.generate-token.outputs.token }}
           script: |
-            const draftIssues = context.outputs['fetch-draft-issues'];
+            const draftIssues = ${{ steps.fetch-draft-issues.outputs.result }};
             for (const issue of draftIssues) {
               await github.issues.create({
                 owner: context.repo.owner,
@@ -65,12 +68,11 @@ jobs:
             }
 
       - name: Create Milestones in New Repository
-        id: create-milestones
         uses: actions/github-script@v4
         with:
-          github-token: ${{ secrets.GH_ASSETS_TOKEN }}
+          github-token: ${{ steps.generate-token.outputs.token }}
           script: |
-            const milestones = context.outputs['fetch-milestones'];
+            const milestones = ${{ steps.fetch-milestones.outputs.result }};
             for (const milestone of milestones) {
               await github.issues.createMilestone({
                 owner: context.repo.owner,
@@ -82,31 +84,16 @@ jobs:
             }
 
       - name: Create Labels in New Repository
-        id: create-labels
         uses: actions/github-script@v4
         with:
-          github-token: ${{ secrets.GH_ASSETS_TOKEN }}
+          github-token: ${{ steps.generate-token.outputs.token }}
           script: |
-            const labels = context.outputs['fetch-labels'];
+            const labels = ${{ steps.fetch-labels.outputs.result }};
             for (const label of labels) {
               await github.issues.createLabel({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 name: label.name,
                 color: label.color
-              });
-            }
-
-      - name: Connect Issues to Project
-        uses: actions/github-script@v4
-        with:
-          github-token: ${{ secrets.GH_ASSETS_TOKEN }}
-          script: |
-            const issues = context.outputs['create-issues'];
-            for (const issue of issues) {
-              await github.projects.addCard({
-                project_id: '2',
-                content_id: issue.id,
-                content_type: 'Issue'
               });
             }
