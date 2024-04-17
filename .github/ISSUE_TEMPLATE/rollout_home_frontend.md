@@ -2,9 +2,9 @@
 name: rollout_home_frontend
 about: home rollout frontend tasks
 title: rollout
-labels: frontend, home
+labels: backend, frontend, home, project management (project)
 assignees: andreaborreca, g-silveri
 
 ---
 
-front end tasks for home page development from scratch
+frontend tasks for home page development from scratch
